@@ -1,0 +1,22 @@
+add_m MACRO num1, num2
+  add ax, num1
+  add ax, num2
+ENDM
+func MACRO num1, num2, num3
+  mov bx, num1
+  mul bx
+  mov cx, ax
+  mov bx, num2
+  div bx
+  add ax, num3
+ENDM
+sub_m MACRO num1, num2
+  sub ax, num1
+  sub ax, num2
+ENDM
+start: 
+  func 1, 4, 9
+  add_m 1, 2
+  add ax, 3
+  sub_m 4, 5
+end start
