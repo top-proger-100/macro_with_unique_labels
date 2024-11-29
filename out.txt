@@ -1,0 +1,6 @@
+       
+       CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
+       LDT     LENGTH
+       LDCH    BUFFER,X
+       TD      =X`F1`
+    END 
