@@ -6,6 +6,15 @@
 #define STR_LEN 256
 #define ARG_LEN 32
 #define NAME_LEN 64
+#define LABEL_COUNT 50
+
+#define LABEL_MARKS_LEN 36
+
+// элемент таблицы меток макроопределения
+struct {
+    char label[ARG_LEN];
+    int ind;
+} typedef labtabElem;
 
 // элемент таблицы namtab, содержащий в себе имя макроопределения и указатели на начало и конец макроопределения
 struct {
@@ -13,6 +22,7 @@ struct {
     int start;
     int settingStartValue;
     int end;
+    labtabElem lt[LABEL_COUNT];
 } typedef namtabElem;
 
 // таблица имён
@@ -40,17 +50,60 @@ struct {
 } typedef argtab;
 argtab at;
 
-
 // 0 - чтение файла; 1 - чтение макроопределения
 int expanding;
 
 // для распознавания MACRO, END И MEND
 char opcode[ARG_LEN];
 
+char labelMarks[LABEL_MARKS_LEN] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+void getLabelMark(char* buff, int ind) {
+    int c = 0;
+    for (int i = 0; i < LABEL_MARKS_LEN; i++) {
+        for (int j = 0; j < LABEL_MARKS_LEN; j++) {
+            if (i + j == ind) {
+                snprintf(buff, sizeof(buff), "%c%c", labelMarks[i], labelMarks[j]);
+                return;
+            }
+        }
+    }
+}
+
 FILE* rf;
 FILE* wf;
 char buffer[STR_LEN];
 
+int hash(const char *str) {
+    unsigned long h = 5381;
+    int c;
+    while ((c = *str++)) {
+        h = ((h << 5) + h) + c;  // h * 33 + c
+    }
+    return h % LABEL_COUNT;
+}
+
+int insert(const char* key, namtabElem* ntElem) {
+    int index = hash(key);
+    while (strlen(ntElem->lt[index].label) != 0) {
+        index = (index + 1) % LABEL_COUNT;
+    }
+    strcpy(ntElem->lt[index].label, key);
+    return index;
+}
+
+int search(const char* key, namtabElem ntElem) {
+    int index = hash(key);
+    int i = 0;
+    while(strlen(ntElem.lt[index].label) != 0 && i < LABEL_COUNT) {
+        if (strcmp(ntElem.lt[index].label, key) == 0) {
+            return ntElem.lt[index].ind;
+        }
+        index = (index + 1) % LABEL_COUNT;
+        i++;
+    }
+    return -1;
+}
 
 // функция бинарного поиска для поиска элементов namtab
 int binary_search(const char *target) {
@@ -162,6 +215,25 @@ void getLine() {
             strcat(buff, num);
             replace(replacedStr, buff, at.args[i]);
         }
+
+        // генерация уникальных меток
+        strcpy(tmp, replacedStr);
+        char* str = strstr(tmp, "$");
+        if (str != NULL) {
+            str = strtok(str, " ");
+            if (str[strlen(str)-1] == '\n') {
+                str[strlen(str)-1] = 0;
+            }
+            int ind = search(str, nt.elems[nt.namTabInd]);
+            if (ind >= 0) {
+                char mark[3];
+                getLabelMark(mark, ind);
+                char labelValue[ARG_LEN] = "$";
+                strcat(labelValue, mark);
+                strcat(labelValue, str+1);
+                replace(replacedStr, str, labelValue);
+            }
+        }
         strcpy(buffer, replacedStr);
     } else {
         if (fgets(buffer, STR_LEN, rf) != NULL) {
@@ -221,8 +293,8 @@ void define() {
         dt.strings[dt.size-1][strlen(dt.strings[dt.size-1])-1] = 0;
     nt.elems[nt.size-1].start = dt.size-1;
     nt.elems[nt.size-1].settingStartValue = dt.size - 1;
-    int level = 1;
-    while (level > 0) {
+    int isRead = 1;
+    while (isRead) {
         getLine();
         checkDtSize();
         strcpy(dt.strings[dt.size++], buffer);
@@ -237,14 +309,20 @@ void define() {
             strcat(buff, num);
             replace(dt.strings[dt.size-1], args[i], buff);
         }
+
+        if (dt.strings[dt.size-1][0] == '$') {
+            strcpy(tmp, dt.strings[dt.size-1]);
+            char* label = strtok(tmp, " ");
+            int index = insert(label, &nt.elems[nt.size-1]);
+            nt.elems[i].lt[index].ind = 0;
+        }
     
-        if (strcmp(opcode, "MACRO") == 0) {
-            level++;
-        } else if (strcmp(opcode, "MEND") == 0) {
-            level--;
+        if (strcmp(opcode, "MEND") == 0) {
+            isRead = 0;
         }
     }
     nt.elems[nt.size-1].end = dt.size-1;
+
     qsort(nt.elems, nt.size, sizeof(namtabElem), compareFunc);
 }
 
@@ -273,6 +351,12 @@ void expand() {
         processLine();   
     }
     nt.elems[nt.namTabInd].start = nt.elems[nt.namTabInd].settingStartValue;
+
+    int i = 0;
+    while (i < LABEL_COUNT) {
+        nt.elems[nt.namTabInd].lt[i].ind++;
+        i++;
+    }
     expanding = 0;
 }
 
@@ -305,6 +389,7 @@ int main(int argc, char** argv) {
         nt.elems[i].start = 0;
         nt.elems[i].end = 0;
     }
+    
     
     dt.size = 0;
     dt.capacity = 10;

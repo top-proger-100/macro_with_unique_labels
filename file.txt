@@ -3,9 +3,13 @@ WRBUFF MACRO   &OUTDEV,&BUFADR,&RECLTH
        LDT     &RECLTH
        LDCH    &BUFADR,X
        TD      =X`&OUTDEV`
+$MET   TD      X
+       JEQ     $MET
        MEND   
        WRBUFF  F1,BUFFER,LENGTH
        
        WRBUFF  F2,BUFFER2,LENGTH2
+       
+       WRBUFF  F3,BUFFER3,LENGTH3
     END 
 

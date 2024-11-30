@@ -2,9 +2,20 @@
        LDT     LENGTH
        LDCH    BUFFER,X
        TD      =X`F1`
+$AAMET   TD      X
+       JEQ     $AAMET
        
        CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
        LDT     LENGTH2
        LDCH    BUFFER2,X
        TD      =X`F2`
+$ABMET   TD      X
+       JEQ     $ABMET
+       
+       CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
+       LDT     LENGTH3
+       LDCH    BUFFER3,X
+       TD      =X`F3`
+$ACMET   TD      X
+       JEQ     $ACMET
     END 
