@@ -1,12 +1,11 @@
-WRBUFF MACRO    &OUTDEV,&BUFADR,&RECLTH
+WRBUFF MACRO   &OUTDEV,&BUFADR,&RECLTH
        CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
        LDT     &RECLTH
        LDCH    &BUFADR,X
        TD      =X`&OUTDEV`
-       MEND
+       MEND   
+       WRBUFF  F1,BUFFER,LENGTH
        
-       WRBUFF F1,BUFFER,LENGTH
-       
-       WRBUFF F2,BUFFER2,LENGTH2
+       WRBUFF  F2,BUFFER2,LENGTH2
     END 
 

@@ -15,6 +15,7 @@ struct {
     int end;
 } typedef namtabElem;
 
+// таблица имён
 struct {
     namtabElem* elems;
     int size;
@@ -50,6 +51,8 @@ FILE* rf;
 FILE* wf;
 char buffer[STR_LEN];
 
+
+// функция бинарного поиска для поиска элементов namtab
 int binary_search(const char *target) {
     int low = 0, high = nt.size - 1;
     while (low <= high) {
@@ -67,6 +70,7 @@ int binary_search(const char *target) {
     return -1;
 }
 
+// замена подстроки в строке (для замены аргументов макроопределения)
 void replace(char* str, char* substrFrom, char* substrTo) {
     size_t ssl = strlen(substrFrom),
       rpl = strlen(substrTo);
@@ -86,10 +90,14 @@ void replace(char* str, char* substrFrom, char* substrTo) {
     }
 }
 
-int compareFunc(const void* a, const void* b ) {
+
+// функция для сортировки элементов (сортировка нужна для поиска)
+int compareFunc(const void* a, const void* b) {
     return strcmp((*(namtabElem*)a).name, (*(namtabElem*)b).name);
 }
 
+
+// увеличение ёмкости strings из deftab
 void checkDtSize() {
     if (dt.size == dt.capacity) {
         dt.capacity *= 2;
@@ -100,6 +108,8 @@ void checkDtSize() {
     }
 }
 
+
+// увеличение ёмкости args из argtab
 void checkAtSize() {
     if (at.size == at.capacity) {
         at.capacity *= 2;
@@ -110,6 +120,7 @@ void checkAtSize() {
     }
 }
 
+// увеличение ёмкости elems из namtab
 void checkNtSize() {
     if (nt.size == nt.capacity) {
         nt.capacity *= 2;
@@ -121,21 +132,26 @@ void checkNtSize() {
     }
 }
 
-// 
+// получение opcode
+void getOpCode(const char* tmp, char startSymbol) {
+    char* p = strtok(tmp, " ");
+    if (!isspace(startSymbol)) {
+        p = strtok(NULL, " ");
+    }
+    if (p != NULL) {
+        strcpy(opcode, p);
+        if (opcode[strlen(opcode)-1] == '\n')
+            opcode[strlen(opcode)-1] = 0;
+    }
+}
+
+// данная функция либо заменяет используемые в макроопределении аргументы, либо читает строку файла
 void getLine() {
     if (expanding) {
         nt.elems[nt.namTabInd].start++;
         char tmp[STR_LEN];
         strcpy(tmp, dt.strings[nt.elems[nt.namTabInd].start]);
-        char* p = strtok(tmp, " ");
-        if (!isspace(dt.strings[nt.elems[nt.namTabInd].start][0])) {
-            p = strtok(NULL, " ");
-        }
-        if (p != NULL) {
-            strcpy(opcode, p);
-            if (opcode[strlen(opcode)-1] == '\n')
-                opcode[strlen(opcode)-1] = 0;
-        }
+        getOpCode(tmp, dt.strings[nt.elems[nt.namTabInd].start][0]);
         char replacedStr[STR_LEN];
         strcpy(replacedStr, dt.strings[nt.elems[nt.namTabInd].start]);
         for (int i = 0; i < at.size; i++) {
@@ -151,19 +167,12 @@ void getLine() {
         if (fgets(buffer, STR_LEN, rf) != NULL) {
             char tmp[STR_LEN];
             strcpy(tmp, buffer);
-            char* p = strtok(tmp, " ");
-            if (!isspace(buffer[0])) {
-                p = strtok(NULL, " ");
-            }
-            if (p != NULL) {
-                strcpy(opcode, p);
-                if (opcode[strlen(opcode)-1] == '\n')
-                    opcode[strlen(opcode)-1] = 0;
-            }
+            getOpCode(tmp, buffer[0]);
         }
     }
 }
 
+// обработка opcode
 void processLine() {
     int ntind = binary_search(opcode);
     if (ntind > -1) {
@@ -180,12 +189,17 @@ void processLine() {
     }
 }
 
+// определение макроса
 void define() {
     char tmp[NAME_LEN];
     strcpy(tmp, buffer);
+
+    // сохранение имени макроопределения
     char* p = strtok(tmp, " ");
     checkNtSize();
     strcpy(nt.elems[nt.size++].name, p);
+
+    // получение аргументов макроопределения
     char* splittedStr = strtok(NULL, " ");
     splittedStr = strtok(NULL, " ");
     char* arg = strtok(splittedStr, ",");
@@ -200,6 +214,7 @@ void define() {
     }
     int size = i;
 
+    // сохранение макроопределения в deftab с заменой агрументов на ?n, n >= 0
     checkDtSize();
     strcpy(dt.strings[dt.size++], buffer);
     if (dt.strings[dt.size-1][strlen(dt.strings[dt.size-1])-1] == '\n')
@@ -222,7 +237,7 @@ void define() {
             strcat(buff, num);
             replace(dt.strings[dt.size-1], args[i], buff);
         }
-
+    
         if (strcmp(opcode, "MACRO") == 0) {
             level++;
         } else if (strcmp(opcode, "MEND") == 0) {
@@ -233,10 +248,13 @@ void define() {
     qsort(nt.elems, nt.size, sizeof(namtabElem), compareFunc);
 }
 
+// получение макроса из deftab с заменой на аргументы при вызове
 void expand() {
     expanding = 1;
     char tmp[STR_LEN];
     strcpy(tmp, buffer);
+
+    // занесение аргументов в argtab
     char* splittedStr = strtok(tmp, " ");
     splittedStr = strtok(NULL, " ");
     char* arg = strtok(splittedStr, ",");
@@ -248,6 +266,8 @@ void expand() {
             at.args[at.size-1][strlen(at.args[at.size-1])-1] = 0;
         arg = strtok(NULL, ",");
     }
+
+    // проход по макроопределению и его вывод в файл
     while(nt.elems[nt.namTabInd].start != nt.elems[nt.namTabInd].end-1) {
         getLine();
         processLine();   
@@ -292,7 +312,6 @@ int main(int argc, char** argv) {
     for (int i = 0; i < dt.capacity; i++) {
         dt.strings[i] = malloc(STR_LEN*sizeof(char));
     }
-
 
     expanding = 0;
     while (strcmp(opcode, "END") != 0) {

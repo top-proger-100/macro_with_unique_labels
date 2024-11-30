@@ -1,4 +1,3 @@
-       
        CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
        LDT     LENGTH
        LDCH    BUFFER,X
