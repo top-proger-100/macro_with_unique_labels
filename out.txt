@@ -3,4 +3,9 @@
        LDT     LENGTH
        LDCH    BUFFER,X
        TD      =X`F1`
+       
+       CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
+       LDT     LENGTH2
+       LDCH    BUFFER2,X
+       TD      =X`F2`
     END 

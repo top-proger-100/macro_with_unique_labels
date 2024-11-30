@@ -6,5 +6,7 @@ WRBUFF MACRO    &OUTDEV,&BUFADR,&RECLTH
        MEND
        
        WRBUFF F1,BUFFER,LENGTH
+       
+       WRBUFF F2,BUFFER2,LENGTH2
     END 
 

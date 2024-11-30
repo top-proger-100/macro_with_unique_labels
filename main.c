@@ -11,6 +11,7 @@
 struct {
     char name[NAME_LEN];
     int start;
+    int settingStartValue;
     int end;
 } typedef namtabElem;
 
@@ -45,7 +46,6 @@ int expanding;
 // для распознавания MACRO, END И MEND
 char opcode[ARG_LEN];
 
-char* endFileP;
 FILE* rf;
 FILE* wf;
 char buffer[STR_LEN];
@@ -136,15 +136,17 @@ void getLine() {
             if (opcode[strlen(opcode)-1] == '\n')
                 opcode[strlen(opcode)-1] = 0;
         }
+        char replacedStr[STR_LEN];
+        strcpy(replacedStr, dt.strings[nt.elems[nt.namTabInd].start]);
         for (int i = 0; i < at.size; i++) {
             char num[15];
             sprintf(num, "%d", i);
             char buff[16];
             strcpy(buff, "?");
             strcat(buff, num);
-            replace(dt.strings[nt.elems[nt.namTabInd].start], buff, at.args[i]);
+            replace(replacedStr, buff, at.args[i]);
         }
-        strcpy(buffer, dt.strings[nt.elems[nt.namTabInd].start]);
+        strcpy(buffer, replacedStr);
     } else {
         if (fgets(buffer, STR_LEN, rf) != NULL) {
             char tmp[STR_LEN];
@@ -203,6 +205,7 @@ void define() {
     if (dt.strings[dt.size-1][strlen(dt.strings[dt.size-1])-1] == '\n')
         dt.strings[dt.size-1][strlen(dt.strings[dt.size-1])-1] = 0;
     nt.elems[nt.size-1].start = dt.size-1;
+    nt.elems[nt.size-1].settingStartValue = dt.size - 1;
     int level = 1;
     while (level > 0) {
         getLine();
@@ -247,8 +250,9 @@ void expand() {
     }
     while(nt.elems[nt.namTabInd].start != nt.elems[nt.namTabInd].end-1) {
         getLine();
-        processLine();
+        processLine();   
     }
+    nt.elems[nt.namTabInd].start = nt.elems[nt.namTabInd].settingStartValue;
     expanding = 0;
 }
 
