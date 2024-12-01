@@ -1,15 +1,23 @@
-WRBUFF MACRO   &OUTDEV,&BUFADR,&RECLTH
-       CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
-       LDT     &RECLTH
-       LDCH    &BUFADR,X
-       TD      =X`&OUTDEV`
-$MET   TD      X
-       JEQ     $MET
-       MEND   
-       WRBUFF  F1,BUFFER,LENGTH
+COPY   START   0                 
+RDBUFF MACRO   &INDEV,&BUFADR,&RECLTH
+       CLEAR   X           ОЧИСТКА СЧЁТЧИКА ЦИКЛА
+       CLEAR   A
+       CLEAR   S
+       LDT     #4096    
+$LOOP  TD      =X`&INDEV` 
+       JEQ     $LOOP       ЦИКЛ ОЖИДАНИЯ ГОТОВНОСТИ
+       RD      =X`&INDEV`  
+       COMPR   A,S         
+       JEQ     $EXIT       
+       STCH    &BUFADR,X   
+       TIXR    T           
+       JLT     $LOOP           
+$EXIT  STX     &RECLTH     СОХРАНЕНИЕ ДЛИНЫ ЗАПИСИ
+       MEND 
+       RDBUFF  INDEV1,BUFADR1,RECLTH1
        
-       WRBUFF  F2,BUFFER2,LENGTH2
+       RDBUFF  INDEV2,BUFADR2,RECLTH2
        
-       WRBUFF  F3,BUFFER3,LENGTH3
+       RDBUFF  INDEV3,BUFADR3,RECLTH3
     END 
 

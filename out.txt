@@ -1,21 +1,43 @@
-       CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
-       LDT     LENGTH
-       LDCH    BUFFER,X
-       TD      =X`F1`
-$AAMET   TD      X
-       JEQ     $AAMET
+COPY   START   0                 
+       CLEAR   X           ОЧИСТКА СЧЁТЧИКА ЦИКЛА
+       CLEAR   A
+       CLEAR   S
+       LDT     #4096    
+$AALOOP  TD      =X`INDEV1` 
+       JEQ     $AALOOP       ЦИКЛ ОЖИДАНИЯ ГОТОВНОСТИ
+       RD      =X`INDEV1`  
+       COMPR   A,S         
+       JEQ     $AAEXIT       
+       STCH    BUFADR1,X   
+       TIXR    T           
+       JLT     $AALOOP           
+$AAEXIT  STX     RECLTH1     СОХРАНЕНИЕ ДЛИНЫ ЗАПИСИ
        
-       CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
-       LDT     LENGTH2
-       LDCH    BUFFER2,X
-       TD      =X`F2`
-$ABMET   TD      X
-       JEQ     $ABMET
+       CLEAR   X           ОЧИСТКА СЧЁТЧИКА ЦИКЛА
+       CLEAR   A
+       CLEAR   S
+       LDT     #4096    
+$ABLOOP  TD      =X`INDEV2` 
+       JEQ     $ABLOOP       ЦИКЛ ОЖИДАНИЯ ГОТОВНОСТИ
+       RD      =X`INDEV2`  
+       COMPR   A,S         
+       JEQ     $ABEXIT       
+       STCH    BUFADR2,X   
+       TIXR    T           
+       JLT     $ABLOOP           
+$ABEXIT  STX     RECLTH2     СОХРАНЕНИЕ ДЛИНЫ ЗАПИСИ
        
-       CLEAR   X    ОЧИСТКА СЧЁТЧИКА ЦИКЛА
-       LDT     LENGTH3
-       LDCH    BUFFER3,X
-       TD      =X`F3`
-$ACMET   TD      X
-       JEQ     $ACMET
+       CLEAR   X           ОЧИСТКА СЧЁТЧИКА ЦИКЛА
+       CLEAR   A
+       CLEAR   S
+       LDT     #4096    
+$ACLOOP  TD      =X`INDEV3` 
+       JEQ     $ACLOOP       ЦИКЛ ОЖИДАНИЯ ГОТОВНОСТИ
+       RD      =X`INDEV3`  
+       COMPR   A,S         
+       JEQ     $ACEXIT       
+       STCH    BUFADR3,X   
+       TIXR    T           
+       JLT     $ACLOOP           
+$ACEXIT  STX     RECLTH3     СОХРАНЕНИЕ ДЛИНЫ ЗАПИСИ
     END 
